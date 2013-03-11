@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.version       = SilverSpurs::VERSION
 
   gem.add_dependency 'sinatra', '>= 1.3.5'
+  gem.add_dependency 'chef', '>= 10.18.2'
 
   gem.add_development_dependency 'guard'
   gem.add_development_dependency 'guard-rspec'

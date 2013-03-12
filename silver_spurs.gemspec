@@ -4,9 +4,9 @@ require File.expand_path('../lib/silver_spurs/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Christian Blades"]
   gem.email         = ["christian.blades@careerbuilder.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = "http://github.com/christian-blades-cb"
+  gem.description   = %q{This is a simple REST service to kick off bootstrap processes. It is intended for use in a VPC-type environment with limited access.}
+  gem.summary       = %q{RESTful service to kick off chef bootstraps}
+  gem.homepage      = "http://github.com/christian-blades-cb/silver_spurs"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }

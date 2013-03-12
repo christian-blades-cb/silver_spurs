@@ -1,5 +1,7 @@
 require 'sinatra/base'
+require 'silver_spurs/knife_interface'
 require 'json'
+
 
 module SilverSpurs
   class App < Sinatra::Base
@@ -31,31 +33,11 @@ module SilverSpurs
       node_name = params[:node_name].strip
       return 406, {:bad_params => :node_name} unless node_name =~ /^[-A-Za-z0-9]+$/
       
-      result = bootstrap(params[:ip], node_name, settings.deployment_user, settings.deployment_key)
+      result = KnifeInterface.bootstrap(params[:ip], node_name, settings.deployment_user, settings.deployment_key)
       status_code = result[:exit_code] == 0 ? 201 : 500
       
       return status_code, result.to_json
     end
-
-    def bootstrap(ip, node_name, deployment_user, deployment_key)
-      puts "doing a thing"
-      strap_r, strap_w = IO.pipe
-      
-      knife_pid = spawn("knife bootstrap -x '#{deployment_user}' -i '#{deployment_key}' -d ubuntu12.04-silver -N #{node_name} #{ip}", :err => :out, :out => strap_w)
-      
-      Process.waitpid(knife_pid)
-      exitcode = $?.exitstatus
-      
-      strap_w.close
-      loglines = strap_r.read
-      strap_r.close
-
-      {
-        :exit_code => exitcode,
-        :log_lines => loglines
-      }
-    end
-    
 
     def required_vars?(params, requirement_list)
       requirement_list.none? { |required_param| params[required_param].nil? }

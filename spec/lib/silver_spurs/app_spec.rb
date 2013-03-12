@@ -39,7 +39,7 @@ describe SilverSpurs::App do
 
     context "with good node name" do
       before(:each) do
-        SilverSpurs::App.stub(:bootstrap).and_return({:exit_code => 0, :log_lines => "I'm a test!"})
+        SilverSpurs::KnifeInterface.stub(:bootstrap).and_return({:exit_code => 0, :log_lines => "I'm a test!"})
       end
       
       it "should accept node names with dashes" do

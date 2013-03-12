@@ -8,7 +8,9 @@ module SilverSpurs
     
     set :deployment_key, "/etc/chef/deployment_key.pem"
     set :deployment_user, "silverspurs"
-    
+    # sane setting for AD subdomain
+    set :node_name_filter, /^[-A-Za-z0-9]{3,15}$/ 
+        
     get '/' do
       %q| Ride 'em, cowboy |
     end
@@ -31,7 +33,7 @@ module SilverSpurs
       end
 
       node_name = params[:node_name].strip
-      return 406, {:bad_params => :node_name} unless node_name =~ /^[-A-Za-z0-9]+$/
+      return 406, {:bad_params => :node_name} unless node_name =~ settings.node_name_filter
       
       result = KnifeInterface.bootstrap(params[:ip], node_name, settings.deployment_user, settings.deployment_key)
       status_code = result[:exit_code] == 0 ? 201 : 500

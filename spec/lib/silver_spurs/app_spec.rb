@@ -34,6 +34,18 @@ describe SilverSpurs::App do
         put "/bootstrap/10.0.0.0", :node_name => node_name
         last_response.status.should eq 406
       end
+
+      it "should reject node names under 3 chars" do
+        node_name = "12"
+        put "/bootstrap/10.0.0.0", :node_name => node_name
+        last_response.status.should eq 406
+      end
+
+      it "should reject node names over 15 chars" do
+        node_name = "1234567890123456"
+        put "/bootstrap/10.0.0.0", :node_name => node_name
+        last_response.status.should eq 406
+      end
             
     end
 
@@ -60,7 +72,19 @@ describe SilverSpurs::App do
         put "/bootstrap/10.0.0.0", :node_name => node_name
         last_response.status.should eq 201
       end
-      
+
+      it "should accept node names with 15 chars" do
+        node_name = "123456789012345"
+        put "/bootstrap/10.0.0.0", :node_name => node_name
+        last_response.status.should eq 201
+      end
+
+      it "should accept node names with 3 chars" do
+        node_name = "123"
+        put "/bootstrap/10.0.0.0", :node_name => node_name
+        last_response.status.should eq 201
+      end
+            
     end
         
   end

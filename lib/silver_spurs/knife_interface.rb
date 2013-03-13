@@ -38,7 +38,7 @@ module SilverSpurs
       
       strap_r, strap_w = IO.pipe
 
-      knife_pid = spawn('knife bootstrap', *arguments, ip, :err => :out, :out => strap_w)
+      knife_pid = spawn('knife', 'bootstrap', *arguments, ip, :err => :out, :out => strap_w)
       
       Process.waitpid(knife_pid)
       exitcode = $?.exitstatus

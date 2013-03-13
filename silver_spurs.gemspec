@@ -17,6 +17,8 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency 'sinatra', '>= 1.3.5'
   gem.add_dependency 'chef', '>= 10.18.2'
+  gem.add_dependency 'rest-client', '~> 1.6.7'
+  gem.add_dependency 'addressable', '~> 2.3.3'
 
   gem.add_development_dependency 'guard'
   gem.add_development_dependency 'guard-rspec'

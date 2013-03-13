@@ -33,7 +33,7 @@ module SilverSpurs
       end
 
       node_name = params[:node_name].strip
-      return 406, {:bad_params => :node_name} unless node_name =~ settings.node_name_filter
+      return 406, {:bad_params => :node_name}.to_json unless node_name =~ settings.node_name_filter
 
       bootstrap_options = Hash[KnifeInterface.supported_arguments.map do |arg|
                                  value = params[arg]

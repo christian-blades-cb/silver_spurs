@@ -19,14 +19,14 @@ module SilverSpurs
       important_settings =
         [
          :deployment_key,
-         :deployment_user
+         :deployment_user,
+         :node_name_filter
         ]
                                   
       Hash[ important_settings.map {|key| [key, settings.send(key)]} ].to_json
     end
 
     put '/bootstrap/:ip' do
-      # knife bootstrap -N artax_meow -i ~/.chef/ChristiansKey.pem -x ubuntu -d ubuntu12.04-silver 172.31.0.198    
       required_params = [:node_name]
       unless required_vars? params, required_params
         return 406, {:required_params => required_params}.to_json
@@ -34,8 +34,14 @@ module SilverSpurs
 
       node_name = params[:node_name].strip
       return 406, {:bad_params => :node_name} unless node_name =~ settings.node_name_filter
+
+      bootstrap_options = Hash[KnifeInterface.supported_arguments.map do |arg|
+                                 value = params[arg]
+                                 next if value.nil?
+                                 [arg, params[arg]]
+                               end]
       
-      result = KnifeInterface.bootstrap(params[:ip], node_name, settings.deployment_user, settings.deployment_key)
+      result = KnifeInterface.bootstrap(params[:ip], node_name, settings.deployment_user, settings.deployment_key, bootstrap_options)
       status_code = result[:exit_code] == 0 ? 201 : 500
       
       return status_code, result.to_json

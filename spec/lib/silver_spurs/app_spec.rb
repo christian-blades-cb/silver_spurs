@@ -57,7 +57,6 @@ describe SilverSpurs::App do
       it "should accept node names with dashes" do
         node_name = "your-mom"
         put "/bootstrap/10.0.0.0", :node_name => node_name
-        puts last_response.body
         last_response.status.should eq 201
       end
 

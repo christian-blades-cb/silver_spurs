@@ -8,6 +8,7 @@ module SilverSpurs
   class Client
     def initialize(host_url, options={})
       @host_url = host_url
+      @timeout = options[:timeout] || 60 * 60
     end
 
     def bootstrap(ip, node_name, options = {})
@@ -35,7 +36,7 @@ module SilverSpurs
     end
 
     def spur_host
-      RestClient::Resource.new(@host_url, :timeout => 15 * 60)
+      RestClient::Resource.new(@host_url, :timeout => @timeout)
     end
             
   end

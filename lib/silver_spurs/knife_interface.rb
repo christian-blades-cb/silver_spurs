@@ -12,7 +12,7 @@ module SilverSpurs
       :ssh_port => '-p',
       :ssh_password => '--ssh-password',
       :run_list => '-r',
-      :template => '--template_file'
+      :template => '--template-file'
     }
 
     def self.supported_arguments
@@ -40,8 +40,9 @@ module SilverSpurs
       
       strap_r, strap_w = IO.pipe
 
-      logger.debug "Knife command line: #{['knife', 'bootstrap', *arguments, ip].join ' '}"
-      knife_pid = spawn('knife', 'bootstrap', *arguments, ip, :err => :out, :out => strap_w)
+      command = ['knife', 'bootstrap', *arguments, ip].join ' '
+      logger.debug "Knife command line: #{command}"
+      knife_pid = spawn(command, :err => :out, :out => strap_w)
       
       Process.waitpid(knife_pid)
       exitcode = $?.exitstatus

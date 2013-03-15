@@ -11,7 +11,8 @@ module SilverSpurs
       :json_attributes => '-j',
       :ssh_port => '-p',
       :ssh_password => '--ssh-password',
-      :run_list => '-r'
+      :run_list => '-r',
+      :template => '--template_file'
     }
 
     def self.supported_arguments
@@ -35,9 +36,11 @@ module SilverSpurs
       }.merge options
 
       arguments = expand_bootstrap_args bootstrap_options
+      logger.debug "Knife arguments: #{arguments.join ', '}"
       
       strap_r, strap_w = IO.pipe
 
+      logger.debug "Knife command line: #{['knife', 'bootstrap', *arguments, ip].join ' '}"
       knife_pid = spawn('knife', 'bootstrap', *arguments, ip, :err => :out, :out => strap_w)
       
       Process.waitpid(knife_pid)
@@ -45,6 +48,7 @@ module SilverSpurs
       
       strap_w.close
       loglines = strap_r.read
+      logger.debug "Knife log lines: #{loglines}"
       strap_r.close
 
       {
@@ -53,5 +57,9 @@ module SilverSpurs
       }
     end
 
+    def self.logger
+      @logger ||= Logger.new(STDERR)
+    end
+    
   end
 end

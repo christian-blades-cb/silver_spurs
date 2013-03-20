@@ -28,7 +28,7 @@ module SilverSpurs
       end.reject {|arg| arg.nil?}              
     end
         
-    def self.bootstrap(ip, node_name, deployment_user, deployment_key, options = {})      
+    def self.bootstrap_command(ip, node_name, deployment_user, deployment_key, options = {})      
       bootstrap_options = {
         :identity_file => deployment_key,
         :ssh_user => deployment_user,
@@ -36,30 +36,8 @@ module SilverSpurs
       }.merge options
 
       arguments = expand_bootstrap_args bootstrap_options
-      logger.debug "Knife arguments: #{arguments.join ', '}"
-      
-      strap_r, strap_w = IO.pipe
 
-      command = ['knife', 'bootstrap', *arguments, ip].join ' '
-      logger.debug "Knife command line: #{command}"
-      knife_pid = spawn(command, :err => :out, :out => strap_w)
-      
-      Process.waitpid(knife_pid)
-      exitcode = $?.exitstatus
-      
-      strap_w.close
-      loglines = strap_r.read
-      logger.debug "Knife log lines: #{loglines}"
-      strap_r.close
-
-      {
-        :exit_code => exitcode,
-        :log_lines => loglines
-      }
-    end
-
-    def self.logger
-      @logger ||= Logger.new(STDERR)
+      command = ['knife', 'bootstrap', *arguments, ip].join ' '      
     end
     
   end

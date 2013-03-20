@@ -7,7 +7,7 @@ module SilverSpurs
     extend SingleForwardable
 
     attr_writer :base_path, :timeout
-    def_delegators :instance, :has_lock?, :base_path, :base_path=, :timeout=, :timeout, :spawn_process, :has_lock?, :success?, :get_log, :reap_lock_if_done, :reap_process, :reap_process_if_old
+    def_delegators :instance, :has_lock?, :base_path, :base_path=, :timeout=, :timeout, :spawn_process, :has_lock?, :success?, :get_log, :reap_orphaned_lock, :reap_process, :reap_old_process, :exists?
     
     def timeout
       @timeout ||= 60 * 60
@@ -19,7 +19,7 @@ module SilverSpurs
 
     def spawn_process(process_name, command)
       create_directory_tree
-      logged_command = "#{command} > #{log_file_path process_name} && touch #{success_file_path process_name}"
+      logged_command = "#{command} &> #{log_file_path process_name} && touch #{success_file_path process_name}"
       pid = Process.spawn logged_command
       File.open(pid_file_path(process_name), 'wb') { |f| f.write pid }
       Process.detach pid
@@ -27,26 +27,24 @@ module SilverSpurs
         
     def has_lock?(process_name)
       return false unless File.exists? pid_file_path(process_name)
-
+      
       pid = File.read(pid_file_path(process_name)).to_i
-      /knife/ =~ `ps -o command -p #{pid}`
+      `ps -o command -p #{pid}`.split("\n").count == 2
     end
 
     def success?(process_name)
       return false unless File.exists? success_file_path(process_name)
-      return true unless File.exists? pid_file_path(process_name)      
-      File.mtime(success_file_path(process_name)) > File.mtime(pid_file_path(process_name))
-    end  
-
+      return true unless File.exists? pid_file_path(process_name)
+      File.mtime(success_file_path(process_name)) >= File.mtime(pid_file_path(process_name))
+    end
+    
     def get_log(process_name)
       return nil unless File.exists? log_file_path(process_name)
       File.read log_file_path(process_name)
     end
 
-    def reap_lock_if_done(process_name)
-      unless has_lock? process_name
-        File.delete pid_file_path(process_name)
-      end
+    def reap_orphaned_lock(process_name)
+      File.delete pid_file_path(process_name) unless has_lock? process_name
     end
 
     def reap_process(process_name)
@@ -59,18 +57,23 @@ module SilverSpurs
       reap_lock_if_done process_name
     end
 
-    def reap_process_if_old(process_name)
+    def reap_old_process(process_name)
       if has_lock? process_name
         launch_time = File.mtime pid_file_path(process_name)
         reap_process process_name if Time.now - launch_time > timeout
       end
+    end
+
+    def exists?(process_name)
+      return true if has_lock? process_name
+      File.exists? log_file_path(process_name)
     end
     
     private
 
     def log_file_path(process_name)
       filename = "#{process_name}.log"
-      File.join base_path, 'status', filename
+      File.join base_path, 'logs', filename
     end
         
     def success_file_path(process_name)
@@ -95,5 +98,3 @@ module SilverSpurs
   end
 end
 
-    
-    

@@ -1,7 +1,7 @@
 require 'sinatra/base'
 require 'silver_spurs/knife_interface'
 require 'json'
-
+require 'silver_spurs/asyncifier'
 
 module SilverSpurs
   class App < Sinatra::Base
@@ -9,8 +9,8 @@ module SilverSpurs
     set :deployment_key, "/etc/chef/deployment_key.pem"
     set :deployment_user, "silverspurs"
     # sane setting for AD subdomain
-    set :node_name_filter, /^[-A-Za-z0-9]{3,15}$/ 
-        
+    set :node_name_filter, /^[-A-Za-z0-9]{3,15}$/
+    
     get '/' do
       %q| Ride 'em, cowboy |
     end
@@ -35,17 +35,55 @@ module SilverSpurs
       node_name = params[:node_name].strip
       return 406, {:bad_params => :node_name}.to_json unless node_name =~ settings.node_name_filter
 
-      bootstrap_options = Hash[KnifeInterface.supported_arguments.map do |arg|
-                                 value = params[arg]
-                                 next if value.nil?
-                                 [arg, params[arg]]
-                               end]
+      process_name = "knife_bootstrap_#{params[:ip].strip.gsub '.', '_'}"
+
+      unless Asyncifier.has_lock? process_name
+        logger.info "Asynchronously spawning knife command. process_name = [#{process_name}]"
+        bootstrap_options = Hash[KnifeInterface.supported_arguments.map do |arg|
+                                   value = params[arg]
+                                   next if value.nil?
+                                   [arg, params[arg]]
+                                 end]
       
-      result = KnifeInterface.bootstrap(params[:ip], node_name, settings.deployment_user, settings.deployment_key, bootstrap_options)
-      status_code = result[:exit_code] == 0 ? 201 : 500
+        command = KnifeInterface.bootstrap_command(
+                                                   params[:ip],
+                                                   node_name,
+                                                   settings.deployment_user,
+                                                   settings.deployment_key,
+                                                   bootstrap_options)
+        logger.debug "knife command: #{command}"
+        Asyncifier.spawn_process process_name, command
+      end
       
-      return status_code, result.to_json
+      redirect to("/bootstrap/query/#{process_name}"), 303
     end
+
+    head '/bootstrap/query/:process_id' do
+      return 404 unless Asyncifier.exists? params[:process_id]
+      Asyncifier.reap_old_process params[:process_id]
+      return 202 if Asyncifier.has_lock? params[:process_id]
+      if Asyncifier.success? params[:process_id]
+        return 201
+      else
+        return 550
+      end
+    end
+
+    get '/bootstrap/query/:process_id' do
+      return 404 unless Asyncifier.exists? params[:process_id]
+      Asyncifier.reap_old_process params[:process_id]
+
+      headers 'Content-Type' => 'text/plain'
+      body Asyncifier.get_log params[:process_id]
+      if Asyncifier.success? params[:process_id]
+        status 201
+      elsif Asyncifier.has_lock? params[:process_id]
+        status 202
+      else
+        status 550
+      end
+    end
+    
 
     def required_vars?(params, requirement_list)
       requirement_list.none? { |required_param| params[required_param].nil? }

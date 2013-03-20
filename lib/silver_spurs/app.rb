@@ -35,7 +35,7 @@ module SilverSpurs
       node_name = params[:node_name].strip
       return 406, {:bad_params => :node_name}.to_json unless node_name =~ settings.node_name_filter
 
-      process_name = "knife_bootstrap_#{node_name.gsub '.', '_'}"
+      process_name = "knife_bootstrap_#{params[:ip].strip.gsub '.', '_'}"
 
       unless Asyncifier.has_lock? process_name
         logger.info "Asynchronously spawning knife command. process_name = [#{process_name}]"
@@ -65,9 +65,8 @@ module SilverSpurs
       if Asyncifier.success? params[:process_id]
         return 201
       else
-        return 510
+        return 550
       end
-      return 500 # how did we get here?
     end
 
     get '/bootstrap/query/:process_id' do
@@ -81,7 +80,7 @@ module SilverSpurs
       elsif Asyncifier.has_lock? params[:process_id]
         status 202
       else
-        status 510
+        status 550
       end
     end
     

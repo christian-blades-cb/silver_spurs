@@ -6,8 +6,8 @@ module SilverSpurs
     include Singleton
     extend SingleForwardable
 
-    attr_writer :base_path, :timeout
-    def_delegators :instance, :has_lock?, :base_path, :base_path=, :timeout=, :timeout, :spawn_process, :has_lock?, :success?, :get_log, :reap_orphaned_lock, :reap_process, :reap_old_process, :exists?
+    attr_writer :base_path, :timeout, :logger
+    def_delegators :instance, :has_lock?, :base_path, :base_path=, :timeout=, :timeout, :spawn_process, :has_lock?, :success?, :get_log, :reap_orphaned_lock, :reap_process, :reap_old_process, :exists?, :logger=
     
     def timeout
       @timeout ||= 60 * 60
@@ -17,9 +17,18 @@ module SilverSpurs
       @base_path ||= './silver_spurs_async'
     end
 
+    def logger
+      unless @logger
+        @logger = Logger.new(STDERR)
+        @logger.level = Logger::DEBUG
+      end
+      @logger
+    end
+    
     def spawn_process(process_name, command)
       create_directory_tree
-      logged_command = "#{command} &> #{log_file_path process_name} && touch #{success_file_path process_name}"
+      logged_command = "#{command} 1> #{log_file_path process_name} 2>&1 && touch #{success_file_path process_name}"
+      logger.debug "Executing: #{logger_command}"
       pid = Process.spawn logged_command
       File.open(pid_file_path(process_name), 'wb') { |f| f.write pid }
       Process.detach pid

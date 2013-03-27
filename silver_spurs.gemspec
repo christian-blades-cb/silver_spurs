@@ -26,5 +26,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'growl'
   gem.add_development_dependency 'rb-fsevent',  '~> 0.9'
   gem.add_development_dependency 'rack-test'
+  gem.add_development_dependency 'rake'
 
 end

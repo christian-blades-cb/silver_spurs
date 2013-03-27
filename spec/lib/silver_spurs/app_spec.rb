@@ -51,41 +51,42 @@ describe SilverSpurs::App do
 
     context "with good node name" do
       before(:each) do
-        SilverSpurs::KnifeInterface.stub(:bootstrap).and_return({:exit_code => 0, :log_lines => "I'm a test!"})
+        SilverSpurs::Asyncifier.stub(:has_lock?).and_return true
       end
       
       it "should accept node names with dashes" do
         node_name = "your-mom"
         put "/bootstrap/10.0.0.0", :node_name => node_name
-        last_response.status.should eq 201
+        last_response.status.should eq 303
       end
 
       it "should accept one-word node names" do
         node_name = "mom"
         put "/bootstrap/10.0.0.0", :node_name => node_name
-        last_response.status.should eq 201
+        last_response.status.should eq 303
       end
 
       it "should accept node names with numbers" do
         node_name = "mombot-3000"
         put "/bootstrap/10.0.0.0", :node_name => node_name
-        last_response.status.should eq 201
+        last_response.status.should eq 303
       end
 
       it "should accept node names with 15 chars" do
         node_name = "123456789012345"
         put "/bootstrap/10.0.0.0", :node_name => node_name
-        last_response.status.should eq 201
+        last_response.status.should eq 303
       end
 
       it "should accept node names with 3 chars" do
         node_name = "123"
         put "/bootstrap/10.0.0.0", :node_name => node_name
-        last_response.status.should eq 201
+        last_response.status.should eq 303
       end
             
     end
-        
+
+    
   end
 end
 

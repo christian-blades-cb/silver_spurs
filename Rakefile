@@ -8,8 +8,6 @@ task :test => [:spec]
 desc "Run all rspec tests"
 RSpec::Core::RakeTask.new 'spec' do |t|
   t.pattern = 'spec/**/*_spec.rb'
-#  t.rspec_opts = '-I spec -I spec/lib/silver_spurs -I lib -I . -fd
-  #  -c'
   t.rspec_opts = '-fd -c'
 end
 

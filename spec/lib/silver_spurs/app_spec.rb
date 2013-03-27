@@ -1,10 +1,28 @@
 require 'spec_helper'
+require 'json'
 
 describe SilverSpurs::App do
   include Rack::Test::Methods
   
   def app
     SilverSpurs::App
+  end
+
+  describe '/' do
+    it "should return 200" do
+      get '/'
+      last_response.status.should be 200
+    end
+  end
+
+  describe '/settings' do
+    it "should tell us about the deployment_key, deployment_user and node_name_filter" do
+      get '/settings'
+      settings_hash = JSON.parse last_response.body
+      [:deployment_key, :deployment_user, :node_name_filter].each do |setting|
+        settings_hash.keys.should include setting.to_s
+      end
+    end
   end
   
   describe "/bootstrap/:ip" do
@@ -85,9 +103,153 @@ describe SilverSpurs::App do
       end
             
     end
+    
+  end
+
+  describe '/bootstrap/query/:process_id' do
+    
+    describe 'HEAD' do
+      
+      context 'process does not exist' do
+        before :each do
+          SilverSpurs::Asyncifier.stub(:exists?).and_return false
+        end
+                
+        it 'should return a 404' do
+          head '/bootstrap/query/fake_process'
+          last_response.status.should eq 404
+        end
+      end
+
+      context 'process is still running' do
+        before :each do
+          SilverSpurs::Asyncifier.stub(:exists?).and_return true
+          SilverSpurs::Asyncifier.stub(:reap_old_process)
+          SilverSpurs::Asyncifier.stub(:has_lock?).and_return true
+        end
+
+        it 'should return a 202' do
+          head '/bootstrap/query/fake_process'
+          last_response.status.should eq 202
+        end
+      end
+
+      context 'process finished successfully' do
+        before :each do
+          SilverSpurs::Asyncifier.stub(:exists?).and_return true
+          SilverSpurs::Asyncifier.stub(:reap_old_process)
+          SilverSpurs::Asyncifier.stub(:has_lock?).and_return false
+          SilverSpurs::Asyncifier.stub(:success?).and_return true
+        end
+
+        it 'should return a 201' do
+          head '/bootstrap/query/fake_process'
+          last_response.status.should eq 201
+        end
+      end
+
+      context 'process finished in failure' do
+        before :each do
+          SilverSpurs::Asyncifier.stub(:exists?).and_return true
+          SilverSpurs::Asyncifier.stub(:reap_old_process)
+          SilverSpurs::Asyncifier.stub(:has_lock?).and_return false
+          SilverSpurs::Asyncifier.stub(:success?).and_return false
+        end
+
+        it 'should return a 550' do
+          head '/bootstrap/query/fake_process'
+          last_response.status.should eq 550
+        end
+      end
+      
+    end
+
+    describe 'GET' do
+      before :each do
+        SilverSpurs::Asyncifier.stub(:get_log).and_return "Loggylog"
+      end
+      
+      context 'process does not exist' do
+        before :each do
+          SilverSpurs::Asyncifier.stub(:exists?).and_return false
+        end
+                
+        it 'should return a 404' do
+          get '/bootstrap/query/fake_process'
+          last_response.status.should eq 404
+        end
+
+        it 'should not spit out a log' do
+          get '/bootstrap/query/fake_process'
+          last_response.body.should_not eq 'Loggylog'
+        end
+        
+      end
+
+      context 'process is still running' do
+        before :each do
+          SilverSpurs::Asyncifier.stub(:exists?).and_return true
+          SilverSpurs::Asyncifier.stub(:reap_old_process)
+          SilverSpurs::Asyncifier.stub(:has_lock?).and_return true
+        end
+
+        it 'should return a 202' do
+          get '/bootstrap/query/fake_process'
+          last_response.status.should eq 202
+        end
+
+        it 'should spit out a log' do
+          get '/bootstrap/query/fake_process'
+          last_response.body.should eq 'Loggylog'
+        end        
+      end
+
+      context 'process finished successfully' do
+        before :each do
+          SilverSpurs::Asyncifier.stub(:exists?).and_return true
+          SilverSpurs::Asyncifier.stub(:reap_old_process)
+          SilverSpurs::Asyncifier.stub(:has_lock?).and_return false
+          SilverSpurs::Asyncifier.stub(:success?).and_return true
+        end
+
+        it 'should return a 201' do
+          get '/bootstrap/query/fake_process'
+          last_response.status.should eq 201
+        end
+
+        it 'should spit out a log' do
+          get '/bootstrap/query/fake_process'
+          last_response.body.should eq 'Loggylog'
+        end
+      end
+
+      context 'process finished in failure' do
+        before :each do
+          SilverSpurs::Asyncifier.stub(:exists?).and_return true
+          SilverSpurs::Asyncifier.stub(:reap_old_process)
+          SilverSpurs::Asyncifier.stub(:has_lock?).and_return false
+          SilverSpurs::Asyncifier.stub(:success?).and_return false
+        end
+
+        it 'should return a 550' do
+          get '/bootstrap/query/fake_process'
+          last_response.status.should eq 550
+        end
+
+        it 'should spit out a log' do
+          get '/bootstrap/query/fake_process'
+          last_response.body.should eq 'Loggylog'
+        end
+      end
+      
+    end
 
     
   end
+  
+          
+
+  
 end
 
     

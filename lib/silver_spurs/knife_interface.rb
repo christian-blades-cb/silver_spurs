@@ -37,7 +37,7 @@ module SilverSpurs
 
       arguments = expand_bootstrap_args bootstrap_options
 
-      command = ['knife', 'bootstrap', *arguments, ip].join ' '      
+      command = ['knife', 'bootstrap', '--no-host-key-verify', *arguments, ip].join ' '      
     end
     
   end

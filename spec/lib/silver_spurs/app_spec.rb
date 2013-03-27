@@ -110,7 +110,7 @@ describe SilverSpurs::App do
     
     describe 'HEAD' do
       
-      context 'process does not exist' do
+      context 'when process does not exist' do
         before :each do
           SilverSpurs::Asyncifier.stub(:exists?).and_return false
         end
@@ -121,7 +121,7 @@ describe SilverSpurs::App do
         end
       end
 
-      context 'process is still running' do
+      context 'when process is still running' do
         before :each do
           SilverSpurs::Asyncifier.stub(:exists?).and_return true
           SilverSpurs::Asyncifier.stub(:reap_old_process)
@@ -134,7 +134,7 @@ describe SilverSpurs::App do
         end
       end
 
-      context 'process finished successfully' do
+      context 'when process finished successfully' do
         before :each do
           SilverSpurs::Asyncifier.stub(:exists?).and_return true
           SilverSpurs::Asyncifier.stub(:reap_old_process)
@@ -148,7 +148,7 @@ describe SilverSpurs::App do
         end
       end
 
-      context 'process finished in failure' do
+      context 'when process finished in failure' do
         before :each do
           SilverSpurs::Asyncifier.stub(:exists?).and_return true
           SilverSpurs::Asyncifier.stub(:reap_old_process)
@@ -169,7 +169,7 @@ describe SilverSpurs::App do
         SilverSpurs::Asyncifier.stub(:get_log).and_return "Loggylog"
       end
       
-      context 'process does not exist' do
+      context 'when process does not exist' do
         before :each do
           SilverSpurs::Asyncifier.stub(:exists?).and_return false
         end
@@ -186,7 +186,7 @@ describe SilverSpurs::App do
         
       end
 
-      context 'process is still running' do
+      context 'when process is still running' do
         before :each do
           SilverSpurs::Asyncifier.stub(:exists?).and_return true
           SilverSpurs::Asyncifier.stub(:reap_old_process)
@@ -204,7 +204,7 @@ describe SilverSpurs::App do
         end        
       end
 
-      context 'process finished successfully' do
+      context 'when process finished successfully' do
         before :each do
           SilverSpurs::Asyncifier.stub(:exists?).and_return true
           SilverSpurs::Asyncifier.stub(:reap_old_process)
@@ -223,7 +223,7 @@ describe SilverSpurs::App do
         end
       end
 
-      context 'process finished in failure' do
+      context 'when process finished in failure' do
         before :each do
           SilverSpurs::Asyncifier.stub(:exists?).and_return true
           SilverSpurs::Asyncifier.stub(:reap_old_process)

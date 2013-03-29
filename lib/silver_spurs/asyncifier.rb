@@ -28,7 +28,7 @@ module SilverSpurs
     def spawn_process(process_name, command)
       create_directory_tree
       logged_command = "#{command} 1> #{log_file_path process_name} 2>&1 && touch #{success_file_path process_name}"
-      logger.debug "Executing: #{logger_command}"
+      logger.debug "Executing: #{logged_command}"
       pid = Process.spawn logged_command
       File.open(pid_file_path(process_name), 'wb') { |f| f.write pid }
       Process.detach pid

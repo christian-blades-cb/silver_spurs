@@ -26,7 +26,34 @@ describe SilverSpurs::App do
   end
   
   describe "/bootstrap/:ip" do
+
+    context "when the node is not already being bootstrapped" do
+      before :each do
+        SilverSpurs::Asyncifier.stub(:has_lock?).and_return false
+      end
+      
+      it "builds a bootstrap command" do
+        SilverSpurs::Asyncifier.stub(:spawn_process)
+        SilverSpurs::KnifeInterface.should_receive(:bootstrap_command).with('10.0.0.0', 'yourmom', kind_of(String), kind_of(String), kind_of(Hash))
+
+        put '/bootstrap/10.0.0.0', :node_name => 'yourmom'
+      end
+
+      it "spawns a knife run" do
+        SilverSpurs::Asyncifier.should_receive(:spawn_process).with(kind_of(String), kind_of(String))
+        SilverSpurs::KnifeInterface.stub(:bootstrap_command).and_return 'knife bootstrap'
+
+        put '/bootstrap/10.0.0.0', :node_name => 'yourmom'
+      end
+    end
     
+    context "when a node name is not passed in" do
+      it "should return a 406 status" do
+        put '/bootstrap/10.0.0.0'
+        last_response.status.should be 406
+      end
+    end
+        
     context "with bad node name" do
       
       it "should reject node names with spaces" do

@@ -172,6 +172,10 @@ describe SilverSpurs::Asyncifier do
   end
 
   describe :reap_orphaned_lock do
+    before :each do
+      SilverSpurs::Asyncifier.instance.stub(:pid_file_path).and_return 'pid_file'
+    end
+    
     it 'checks to see if the process is active' do
       SilverSpurs::Asyncifier.instance.should_receive(:has_lock?).and_return true
       SilverSpurs::Asyncifier.reap_orphaned_lock 'foo'
@@ -206,6 +210,7 @@ describe SilverSpurs::Asyncifier do
     before :each do
       SilverSpurs::Asyncifier.instance.stub(:sleep)
       SilverSpurs::Asyncifier.instance.stub(:reap_orphaned_lock)
+      SilverSpurs::Asyncifier.instance.stub(:pid_file_path).and_return 'pid_file'
     end
     
     it 'checks to see if the process is active' do
@@ -278,7 +283,190 @@ describe SilverSpurs::Asyncifier do
     
   end
   
+  describe :reap_old_process do
+    before :each do
+      SilverSpurs::Asyncifier.instance.stub(:pid_file_path).and_return 'pid_file'
+    end
+    
+    it 'checks if the process is active' do
+      SilverSpurs::Asyncifier.instance.should_receive(:has_lock?).and_return false
+      SilverSpurs::Asyncifier.reap_old_process 'foo'
+    end
 
+    context 'when the process is active' do
+      before :each do
+        SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return true
+      end
+
+      context 'when the process is beyond the timeout window' do
+        before :each do
+          Time.stub(:now).and_return Time.new(2013)
+          SilverSpurs::Asyncifier.instance.stub(:timeout).and_return 100
+          File.stub(:mtime).and_return Time.new(2013) - 101          
+        end
+        
+        it 'reaps the process' do
+          SilverSpurs::Asyncifier.instance.should_receive(:reap_process)
+          SilverSpurs::Asyncifier.reap_old_process 'foo'
+        end        
+      end
+
+      context 'when the process is within the timeout window' do
+        before :each do
+          Time.stub(:now).and_return Time.new(2013)
+          SilverSpurs::Asyncifier.instance.stub(:timeout).and_return 100
+          File.stub(:mtime).and_return Time.new(2013) - 99          
+        end
+        
+        it 'does not reap the process' do
+          SilverSpurs::Asyncifier.instance.should_not_receive(:reap_process)
+          SilverSpurs::Asyncifier.reap_old_process 'foo'
+        end        
+      end
+      
+    end
+
+    context 'when the process is not active' do
+      before :each do
+        SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return false
+      end
+
+      it 'does not attempt to reap the process' do
+        SilverSpurs::Asyncifier.instance.should_not_receive :reap_process
+        SilverSpurs::Asyncifier.reap_old_process 'foo'
+      end
+    end
+    
+  end
   
+  describe :exists? do
+    context 'when the process is active' do
+      before :each do
+        SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return true
+      end
+      
+      it 'returns true' do
+        SilverSpurs::Asyncifier.exists?('foo').should be_true
+      end
+      
+    end
+
+    context 'when the process is not active' do
+      before :each do
+        SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return false
+        SilverSpurs::Asyncifier.instance.stub(:log_file_path).and_return 'log_file'
+      end
+
+      context 'if the log file exists' do
+        before :each do
+          File.stub(:exists?).and_return true
+        end
+
+        it 'returns true' do
+          SilverSpurs::Asyncifier.exists?('foo').should be_true
+        end          
+      end
+
+      context 'if the log file does not exist' do
+        before :each do
+          File.stub(:exists?).and_return false
+        end
+
+        it 'returns false' do
+          SilverSpurs::Asyncifier.exists?('foo').should be_false
+        end
+      end
+      
+    end
+    
+  end
+  
+  describe :log_file_path do
+    it 'builds a path in the base directory' do
+      SilverSpurs::Asyncifier.instance.should_receive(:base_path).and_return 'base_path'
+      File.should_receive(:join)
+      SilverSpurs::Asyncifier.instance.send(:log_file_path, 'foo')
+    end
+
+    it 'returns a file name' do
+      SilverSpurs::Asyncifier.instance.send(:log_file_path, 'foo').should be_a_kind_of(String)
+    end
+  end
+
+  describe :success_file_path do
+    it 'builds a path in the base directory' do
+      SilverSpurs::Asyncifier.instance.should_receive(:base_path).and_return 'base_path'
+      File.should_receive(:join)
+      SilverSpurs::Asyncifier.instance.send(:success_file_path, 'foo')
+    end
+
+    it 'returns a file name' do
+      SilverSpurs::Asyncifier.instance.send(:success_file_path, 'foo').should be_a_kind_of(String)
+    end
+  end
+
+  describe :pid_file_path do
+    it 'builds a path in the base directory' do
+      SilverSpurs::Asyncifier.instance.should_receive(:base_path).and_return 'base_path'
+      File.should_receive(:join)
+      SilverSpurs::Asyncifier.instance.send(:pid_file_path, 'foo')
+    end
+
+    it 'returns a file name' do
+      SilverSpurs::Asyncifier.instance.send(:pid_file_path, 'foo').should be_a_kind_of(String)
+    end
+  end
+
+  describe :create_directory_tree do
+    it 'checks to see if the base path already exists' do
+      Dir.should_receive(:exists?).at_least(:once).and_return true
+      SilverSpurs::Asyncifier.instance.send(:create_directory_tree)        
+    end
+
+    context 'if the base path already exists' do
+      before :each do
+        Dir.stub(:exists?).and_return true
+      end
+      
+      it 'does not create the base directory' do
+        Dir.should_not_receive(:mkdir)
+        SilverSpurs::Asyncifier.instance.send(:create_directory_tree)
+      end
+    end
+
+    context 'if the base path does not exist' do
+      before :each do
+        Dir.stub(:exists?).and_return(false, true)
+      end
+      
+      it 'creates the base directory' do
+        Dir.should_receive(:mkdir)
+        SilverSpurs::Asyncifier.instance.send(:create_directory_tree)
+      end
+    end
+
+    context 'if a directory exists' do
+      before :each do
+        Dir.stub(:exists?).and_return true
+      end
+      
+      it 'does not create the directory' do
+        Dir.should_not_receive(:mkdir)
+        SilverSpurs::Asyncifier.instance.send(:create_directory_tree)
+      end        
+    end
+
+    context 'if a directory does not exist' do
+      before :each do
+        Dir.stub(:exists?).and_return(true, false)
+      end
+      
+      it 'creates the directory' do
+        Dir.should_receive(:mkdir).exactly(3).times
+        SilverSpurs::Asyncifier.instance.send(:create_directory_tree)
+      end
+    end
+    
+  end
   
 end

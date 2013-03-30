@@ -3,13 +3,13 @@ require 'logger'
 
 describe SilverSpurs::Asyncifier do
 
-  describe 'timeout' do
+  describe :timeout do
     it 'defaults to 60 minutes' do
       SilverSpurs::Asyncifier.timeout.should eq 60 * 60
     end    
   end
 
-  describe 'logger' do
+  describe :logger do
     it 'defaults to STDERR' do
       logger_dbl = double('logger')
       logger_dbl.stub(:level=)
@@ -19,7 +19,7 @@ describe SilverSpurs::Asyncifier do
     end    
   end
 
-  describe 'has_lock?' do
+  describe :has_lock? do
     context 'when there is no pid file' do
       before :each do
         File.stub(:exists?).and_return false
@@ -65,10 +65,220 @@ describe SilverSpurs::Asyncifier do
           SilverSpurs::Asyncifier.has_lock?('1234').should be_false
         end        
       end      
+
+    end
+
+  end
+
+  describe :success? do
+    before :each do
+      SilverSpurs::Asyncifier.instance.stub(:success_file_path).and_return 'success_file'
+    end
+    
+    it 'checks for a success file' do      
+      File.should_receive(:exists?).with('success_file').and_return false
       
+      SilverSpurs::Asyncifier.success?('foo')
+    end
+    
+    context 'when the success file does not exist' do
+      before :each do
+        File.stub(:exists?).and_return false
+      end
+
+      it 'returns false' do
+        SilverSpurs::Asyncifier.success?('foo').should be_false
+      end
+    end
+
+    context 'when the success file exists' do
+      before :each do
+        SilverSpurs::Asyncifier.instance.stub(:pid_file_path).and_return 'pid_file'
+        File.stub(:exists?).with('success_file').and_return true
+      end
+      
+      it 'checks to see if the pid file exists' do
+        File.should_receive(:exists?).twice.and_return(true, false)
+        SilverSpurs::Asyncifier.success? 'foo'
+      end
+
+      context 'when the pid file exists' do
+        before :each do
+          File.stub(:exists?).and_return(true, true)
+        end
+
+        it 'checks the modified time of the success and pid file' do
+          File.should_receive(:mtime).twice.and_return(Time.now)
+          SilverSpurs::Asyncifier.success? 'foo'
+        end
+
+        context 'when the success file is younger than the pid file' do
+          before :each do
+            File.stub(:mtime).and_return(Time.new(2013), Time.new(2012))
+          end
+
+          it 'should return true' do
+            SilverSpurs::Asyncifier.success?('foo').should be_true
+          end
+        end
+
+        context 'when the pid file is younger than the success file' do
+          before :each do
+            File.stub(:mtime).and_return(Time.new(2012), Time.new(2013))
+          end
+
+          it 'should return false' do
+            SilverSpurs::Asyncifier.success?('foo').should be_false
+          end          
+        end
+                
+      end
+            
+    end
+          
+  end
+
+  describe :get_log do
+    before :each do
+      SilverSpurs::Asyncifier.instance.stub(:log_file_path).and_return 'log_file'
+    end
+    
+    it 'checks to see if the log file exists' do
+      File.should_receive(:exists?).and_return false
+      SilverSpurs::Asyncifier.get_log 'foo'
+    end
+
+    context 'when the log file exists' do
+      before :each do
+        File.stub(:exists?).and_return true
+      end
+
+      it 'reads the log' do
+        File.stub(:read).and_return 'logs are cool'
+        SilverSpurs::Asyncifier.get_log('foo').should eq 'logs are cool'
+      end      
+    end
+
+    context 'when the log file does not exist' do
+      before :each do
+        File.stub(:exists?).and_return false
+      end
+
+      it 'returns nil' do
+        SilverSpurs::Asyncifier.get_log('foo').should be_nil
+      end
     end
     
   end
+
+  describe :reap_orphaned_lock do
+    it 'checks to see if the process is active' do
+      SilverSpurs::Asyncifier.instance.should_receive(:has_lock?).and_return true
+      SilverSpurs::Asyncifier.reap_orphaned_lock 'foo'
+    end
+
+    context 'when the process is still active' do
+      before :each do
+        SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return true
+      end
+
+      it 'should not try to delete the lock' do
+        File.should_not_receive(:delete)
+        SilverSpurs::Asyncifier.reap_orphaned_lock 'foo'
+      end
+    end
+
+    context 'when the process is not active' do
+      before :each do
+        SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return false
+        SilverSpurs::Asyncifier.instance.stub(:pid_file_path).and_return 'pid_file'
+      end
+
+      it 'should delete the lock file' do
+        File.should_receive(:delete).with('pid_file')
+        SilverSpurs::Asyncifier.reap_orphaned_lock 'foo'
+      end
+    end
+    
+  end
+
+  describe :reap_process do
+    before :each do
+      SilverSpurs::Asyncifier.instance.stub(:sleep)
+      SilverSpurs::Asyncifier.instance.stub(:reap_orphaned_lock)
+    end
+    
+    it 'checks to see if the process is active' do
+      SilverSpurs::Asyncifier.instance.should_receive(:has_lock?).and_return false
+      SilverSpurs::Asyncifier.reap_process 'foo'
+    end
+
+    it 'reaps the lock file' do
+      SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return false
+      SilverSpurs::Asyncifier.instance.should_receive(:reap_orphaned_lock)
+      SilverSpurs::Asyncifier.reap_process 'foo'
+    end
+
+    context 'when the process is active' do
+      before :each do
+        File.stub(:read).and_return '1234'
+        Process.stub(:kill)
+        SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return true
+      end
+
+      it 'kills the process' do
+        Process.should_receive(:kill)
+        SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return(true, false)
+        SilverSpurs::Asyncifier.reap_process 'foo'
+      end
+
+      it 'checks to see if the process really died' do
+        SilverSpurs::Asyncifier.instance.should_receive(:has_lock?).twice.and_return(true, false)
+        SilverSpurs::Asyncifier.reap_process 'foo'
+      end      
+
+      context 'when the process dies when asked nicely' do
+        before :each do
+          SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return(true, false)
+        end
+
+        it 'just walks away' do
+          Process.should_receive(:kill).once
+          SilverSpurs::Asyncifier.reap_process 'foo'
+        end
+      end
+      
+      context "when the process doesn't die after being asked nicely" do
+        before :each do
+          SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return(true, true)          
+        end
+        
+        it 'kills the process with fire' do
+          Process.should_receive(:kill).twice
+          SilverSpurs::Asyncifier.reap_process 'foo'
+        end
+      end
+      
+    end
+
+    context 'if the process is inactive' do
+      before :each do
+        SilverSpurs::Asyncifier.instance.stub(:has_lock?).and_return false        
+      end
+
+      it 'skips to reaping the lock file' do
+        File.should_not_receive(:read)
+        Process.should_not_receive(:kill)
+        
+        SilverSpurs::Asyncifier.instance.should_receive(:reap_orphaned_lock)
+        
+        SilverSpurs::Asyncifier.reap_process 'foo'
+      end      
+    end
+    
+  end
+  
+
   
   
 end

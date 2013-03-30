@@ -63,7 +63,7 @@ module SilverSpurs
         sleep 1
         Process.kill('TERM', pid) if has_lock? process_name
       end
-      reap_lock_if_done process_name
+      reap_orphaned_lock process_name
     end
 
     def reap_old_process(process_name)

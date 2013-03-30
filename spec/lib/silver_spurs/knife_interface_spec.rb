@@ -81,7 +81,32 @@ describe SilverSpurs::KnifeInterface do
     end
     
   end
-end
 
+  describe 'supported_arguments' do
+    
+    it 'includes all of the keys form BOOTSTRAP_ARGS_MAP' do
+      SilverSpurs::KnifeInterface::BOOTSTRAP_ARGS_MAP.each do |k,v|
+        SilverSpurs::KnifeInterface.supported_arguments.should include k
+      end
+    end
+    
+  end
+
+  describe 'bootstrap_command' do
+
+    it 'expands the arguments into a "knife bootstrap -FLAG VALUE HOST" pattern' do
+      ip = '1.2.3.4'
+      node_name = 'noodles'
+      user = 'user'
+      key = 'key'
+      options = {:distro => 'suse', :run_list => 'recipe[world_one]'}
+      expected = "knife bootstrap --no-host-key-verify -i '#{key}' -x '#{user}' -N '#{node_name}' -d 'suse' -r 'recipe[world_one]' #{ip}"
+      SilverSpurs::KnifeInterface.bootstrap_command(ip, node_name, user, key, options).should eq expected
+    end
+
+  end
+  
+  
+end
 
   

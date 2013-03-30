@@ -2,7 +2,10 @@ require 'spec_helper'
 require 'logger'
 
 describe SilverSpurs::Asyncifier do
-
+  before :each do
+    SilverSpurs::Asyncifier.logger = Logger.new('/dev/null')
+  end
+  
   describe :timeout do
     it 'defaults to 60 minutes' do
       SilverSpurs::Asyncifier.timeout.should eq 60 * 60
@@ -10,6 +13,10 @@ describe SilverSpurs::Asyncifier do
   end
 
   describe :logger do
+    before :each do
+      SilverSpurs::Asyncifier.logger = nil
+    end
+    
     it 'defaults to STDERR' do
       logger_dbl = double('logger')
       logger_dbl.stub(:level=)
@@ -19,6 +26,36 @@ describe SilverSpurs::Asyncifier do
     end    
   end
 
+  describe :spawn_process do
+    before :each do
+      SilverSpurs::Asyncifier.instance.stub(:create_directory_tree)
+      Process.stub(:spawn)
+      File.stub(:open)
+      Process.stub(:detach)
+    end
+    
+    it 'creates the directory tree' do
+      SilverSpurs::Asyncifier.instance.should_receive(:create_directory_tree)
+      SilverSpurs::Asyncifier.spawn_process('foo', 'echo foo')
+    end
+
+    it 'spawns the process' do
+      Process.should_receive(:spawn)
+      SilverSpurs::Asyncifier.spawn_process('foo', 'echo foo')
+    end
+
+    it 'writes the pid to the lock file' do
+      File.should_receive(:open)
+      SilverSpurs::Asyncifier.instance.should_receive(:pid_file_path)
+      SilverSpurs::Asyncifier.spawn_process('foo', 'echo foo')
+    end
+
+    it 'detaches the process' do
+      Process.should_receive(:detach)
+      SilverSpurs::Asyncifier.spawn_process('foo', 'echo foo')
+    end  
+  end
+  
   describe :has_lock? do
     context 'when there is no pid file' do
       before :each do

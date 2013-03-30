@@ -38,7 +38,7 @@ module SilverSpurs
       return false unless File.exists? pid_file_path(process_name)
       
       pid = File.read(pid_file_path(process_name)).to_i
-      `ps -o command -p #{pid}`.split("\n").count == 2
+      IO.popen("ps -o command -p #{pid}").read.split("\n").count == 2
     end
 
     def success?(process_name)
@@ -63,7 +63,7 @@ module SilverSpurs
         sleep 1
         Process.kill('TERM', pid) if has_lock? process_name
       end
-      reap_lock_if_done process_name
+      reap_orphaned_lock process_name
     end
 
     def reap_old_process(process_name)

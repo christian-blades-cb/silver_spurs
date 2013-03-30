@@ -100,7 +100,7 @@ describe SilverSpurs::KnifeInterface do
       user = 'user'
       key = 'key'
       options = {:distro => 'suse', :run_list => 'recipe[world_one]'}
-      expected = "knife bootstrap -i '#{key}' -x '#{user}' -N '#{node_name}' -d 'suse' -r 'recipe[world_one]' #{ip}"
+      expected = "knife bootstrap --no-host-key-verify -i '#{key}' -x '#{user}' -N '#{node_name}' -d 'suse' -r 'recipe[world_one]' #{ip}"
       SilverSpurs::KnifeInterface.bootstrap_command(ip, node_name, user, key, options).should eq expected
     end
 

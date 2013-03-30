@@ -55,7 +55,6 @@ describe SilverSpurs::App do
     end
         
     context "with bad node name" do
-      
       it "should reject node names with spaces" do
         node_name = "your mom"
         put "/bootstrap/10.0.0.0", :node_name => node_name
@@ -91,7 +90,6 @@ describe SilverSpurs::App do
         put "/bootstrap/10.0.0.0", :node_name => node_name
         last_response.status.should eq 406
       end
-            
     end
 
     context "with good node name" do
@@ -128,7 +126,6 @@ describe SilverSpurs::App do
         put "/bootstrap/10.0.0.0", :node_name => node_name
         last_response.status.should eq 303
       end
-            
     end
     
   end
@@ -270,13 +267,9 @@ describe SilverSpurs::App do
       end
       
     end
-
     
   end
-  
-          
-
-  
+   
 end
 
     

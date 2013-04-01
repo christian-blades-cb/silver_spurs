@@ -49,7 +49,3 @@ module SilverSpurs
         
   end
 end
-
-
-    
-    

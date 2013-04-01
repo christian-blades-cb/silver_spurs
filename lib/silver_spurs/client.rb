@@ -17,13 +17,7 @@ module SilverSpurs
       payload = parameterize_hash params
       headers = {:accept => :json, :content_type=> 'application/x-www-form-urlencoded'}
 
-      response = spur_host["bootstrap/#{ip}"].put(payload, headers) do |response, &block|
-        if response.code == 303
-          response
-        else
-          response.return! &block
-        end
-      end
+      response = spur_host["bootstrap/#{ip}"].put(payload, headers, &method(:dont_redirect_for_303))
       
       throw ClientException.new("unexpected response", response) unless response.code == 303
 
@@ -46,6 +40,14 @@ module SilverSpurs
     def spur_host
       RestClient::Resource.new(@host_url, :timeout => @timeout)
     end
-            
+
+    def dont_redirect_for_303(response, origin, orig_result, &block)
+      if response.code == 303
+        response
+      else
+        response.return! &block
+      end
+    end
+                
   end
 end

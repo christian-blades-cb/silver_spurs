@@ -39,6 +39,7 @@ module SilverSpurs
     end
 
     private
+    
     def no_exception_for_550(response, origin, orig_result, &block)
       if response.code == 550
         response
@@ -49,7 +50,3 @@ module SilverSpurs
         
   end
 end
-
-
-    
-    

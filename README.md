@@ -1,4 +1,4 @@
-# SilverSpurs [![Build Status](https://travis-ci.org/christian-blades-cb/silver_spurs.png?branch=master)](https://travis-ci.org/christian-blades-cb/silver_spurs)
+# SilverSpurs [![Build Status](https://travis-ci.org/christian-blades-cb/silver_spurs.png?branch=master)](https://travis-ci.org/christian-blades-cb/silver_spurs) [![Gem Version](https://badge.fury.io/rb/silver_spurs.png)](http://badge.fury.io/rb/silver_spurs)
 
 RESTful Chef bootstrapping
 

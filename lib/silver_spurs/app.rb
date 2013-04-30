@@ -2,12 +2,18 @@ require 'sinatra/base'
 require 'silver_spurs/knife_interface'
 require 'json'
 require 'silver_spurs/asyncifier'
+require 'ridley'
 
 module SilverSpurs
   class App < Sinatra::Base
     
     set :deployment_key, "/etc/chef/deployment_key.pem"
     set :deployment_user, "silverspurs"
+    set :chef_config, {
+      server_url: 'http://localhost:4000',
+      client_name: 'silver_spurs',
+      client_key: '/etc/chef/silver_spurs.pem'
+    }
     # sane setting for AD subdomain
     set :node_name_filter, /^[-A-Za-z0-9]{3,15}$/
     
@@ -83,11 +89,16 @@ module SilverSpurs
         status 550
       end
     end
-    
+
+    post '/kick/:ip' do
+      run_list = params[:run]
+      chef = ChefInterface.new(settings.chef_config)
+      chef.chef_run(params[:ip], run_list)
+    end
 
     def required_vars?(params, requirement_list)
       requirement_list.none? { |required_param| params[required_param].nil? }
     end
-        
+    
   end
 end

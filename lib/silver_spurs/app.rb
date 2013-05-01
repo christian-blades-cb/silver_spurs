@@ -2,6 +2,7 @@ require 'sinatra/base'
 require 'silver_spurs/knife_interface'
 require 'json'
 require 'silver_spurs/asyncifier'
+require 'silver_spurs/chef_interface'
 require 'ridley'
 
 module SilverSpurs

@@ -12,7 +12,7 @@ module SilverSpurs
     set :chef_config, {
       server_url: 'http://localhost:4000',
       client_name: 'silver_spurs',
-      client_key: '/etc/chef/silver_spurs.pem'
+      client_key: '/etc/chef/silver_spurs.pem',
       ssh: {
         user: settings.deployment_user,
         keys: [ settings.deployment_key ],

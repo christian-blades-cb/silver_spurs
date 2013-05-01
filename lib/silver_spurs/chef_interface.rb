@@ -11,7 +11,7 @@ module SilverSpurs
 
     def chef_run(node_name, run_list = [])
       node = ridley.node.find(node_name)
-      if a.size > 0
+      if run_list.size > 0
         command = "sudo chef-client -o '#{run_list.join(',')}'"
         node.execute_command command
       else

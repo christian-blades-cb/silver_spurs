@@ -99,7 +99,7 @@ module SilverSpurs
     post '/kick/:ip' do
       run_list = params[:run]
       chef = ChefInterface.new(settings.chef_config)
-      chef.chef_run(params[:ip], run_list)
+      chef.chef_run(params[:ip], run_list).to_json
     end
 
     def required_vars?(params, requirement_list)

@@ -10,10 +10,10 @@ module SilverSpurs
     end
 
     def chef_run(node_name, run_list = [])
-      node = ridley.node.find(node_name)
+      node = find_node node_name
       if run_list.size > 0
         command = "sudo chef-client -o '#{run_list.join(',')}'"
-        node.execute_command command
+        ridley.node.execute_command node.public_hostname, command
       else
         node.chef_run
       end
@@ -23,6 +23,12 @@ module SilverSpurs
 
     def ridley
       @ridley ||= Ridley.new(@chef_config)
+    end
+
+    def find_node(node_name)
+      node = ridley.node.find(node_name)
+      raise 'Unknown node' unless node
+      node
     end
 
   end

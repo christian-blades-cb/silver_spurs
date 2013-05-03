@@ -97,7 +97,7 @@ module SilverSpurs
     end
 
     post '/kick/:ip' do
-      run_list = params[:run]
+      run_list = params[:run] || []
       chef = ChefInterface.new(settings.chef_config)
       chef.chef_run(params[:ip], run_list).to_json
     end

@@ -269,6 +269,17 @@ describe SilverSpurs::App do
     end
     
   end
+
+  describe '/kick/:ip' do
+    it 'starts a chef run' do
+      chef = double('chef')
+      SilverSpurs::ChefInterface.stub(:new).and_return chef
+
+      chef.should_receive :chef_run
+
+      post '/kick/node'
+    end
+  end
    
 end
 

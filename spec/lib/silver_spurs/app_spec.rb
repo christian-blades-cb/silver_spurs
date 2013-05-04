@@ -269,6 +269,29 @@ describe SilverSpurs::App do
     end
     
   end
+
+  describe '/kick/:ip' do
+    before :each do
+      @chef = double('chef')
+      SilverSpurs::ChefInterface.stub(:new).and_return @chef
+    end
+
+    it 'starts a chef run' do
+      @chef.should_receive :chef_run
+
+      post '/kick/node'
+    end
+
+    context 'when the node does not exist' do
+      it 'should return a 404' do
+        @chef.stub(:chef_run).and_raise(SilverSpurs::NodeNotFoundException.new)
+
+        post '/kick/node'
+        last_response.status.should eq 404
+      end
+    end
+
+  end
    
 end
 

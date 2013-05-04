@@ -3,6 +3,7 @@ require 'silver_spurs/knife_interface'
 require 'json'
 require 'silver_spurs/asyncifier'
 require 'silver_spurs/chef_interface'
+require 'silver_spurs/chef_exceptions'
 require 'ridley'
 
 module SilverSpurs
@@ -99,7 +100,11 @@ module SilverSpurs
     post '/kick/:ip' do
       run_list = params[:run] || []
       chef = ChefInterface.new(settings.chef_config)
-      chef.chef_run(params[:ip], run_list).to_json
+      begin
+        chef.chef_run(params[:ip], run_list).to_json
+      rescue SilverSpurs::NodeNotFoundException
+        status 404
+      end
     end
 
     def required_vars?(params, requirement_list)

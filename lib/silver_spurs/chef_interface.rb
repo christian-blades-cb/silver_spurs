@@ -1,6 +1,7 @@
 require 'singleton'
 require 'forwardable'
 require 'ridley'
+require 'silver_spurs/chef_exceptions'
 
 module SilverSpurs
   class ChefInterface
@@ -27,7 +28,7 @@ module SilverSpurs
 
     def find_node(node_name)
       node = ridley.node.find(node_name)
-      raise 'Unknown node' unless node
+      raise NodeNotFoundException.new unless node
       node
     end
 

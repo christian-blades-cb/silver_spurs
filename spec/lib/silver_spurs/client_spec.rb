@@ -119,10 +119,14 @@ describe SilverSpurs::Client do
     end
 
     it 'returns a ChefRun object' do
-      response = ["ok", {'stderr' => '', 'stdout' => '', 'exit_code' => 0, 'exit_status' => 0}]
-      @resource.stub(:post).and_return response.to_json
+      response_payload = ["ok", {'stderr' => '', 'stdout' => '', 'exit_code' => 0, 'exit_status' => 0}]
+      response = double('response')
+      response.stub(:to_str).and_return response_payload.to_json
+      response.stub(:code).and_return 200
 
-      SilverSpurs::ChefRun.should_receive(:new).with(response)
+      @resource.stub(:post).and_return response
+
+      SilverSpurs::ChefRun.should_receive(:new).with(response_payload)
 
       @client.start_chef_run('hostname')
     end

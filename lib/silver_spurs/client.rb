@@ -27,6 +27,7 @@ module SilverSpurs
 
     def start_chef_run(host_name, runlist = [])
       response = spur_host["kick/#{host_name}"].post :params => { :run => runlist }
+      raise ClientException.new("the host name was not found", response) if response.code == 404
       ChefRun.new JSON.parse(response)
     end
 

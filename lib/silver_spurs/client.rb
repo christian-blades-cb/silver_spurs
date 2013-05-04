@@ -4,6 +4,7 @@ require 'json'
 require 'silver_spurs/knife_interface'
 require 'silver_spurs/client/exceptions'
 require 'silver_spurs/client/bootstrap_run'
+require 'silver_spurs/client/chef_run'
 
 module SilverSpurs
   class Client
@@ -22,6 +23,11 @@ module SilverSpurs
       throw ClientException.new("unexpected response", response) unless response.code == 303
 
       BootstrapRun.new(response.headers[:location], :timeout => @timeout)
+    end
+
+    def start_chef_run(host_name, runlist = [])
+      response = spur_host["kick/#{host_name}"].post :params => { :run => runlist }
+      ChefRun.new JSON.parse(response)
     end
 
     private

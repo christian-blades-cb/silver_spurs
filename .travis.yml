@@ -4,3 +4,6 @@ rvm:
   - 1.9.3
   - 1.9.2
   - ruby-head
+notifications:
+  campfire:
+      secure: "e/rh1fwGlXvclgG7ql+WEHVm1TwdbJ/iSpbjzYvdvud9ZtWPHEI8/qvUMeqR\n4PZDqLfCt9N2Eliky4VGo49yu4OGYEy9bY0I/oRLi8DQw4eFohwTII14oXM2\nDh1qT/5p1DeIfm0BgHwbS0YwsbaIWpYoYdh3C93FNwsNXI0lMoQ="

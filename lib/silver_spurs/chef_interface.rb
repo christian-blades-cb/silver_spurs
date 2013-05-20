@@ -14,7 +14,7 @@ module SilverSpurs
       node = find_node node_name
       if run_list.size > 0
         command = "sudo chef-client -o '#{run_list.join(',')}'"
-        ridley.node.execute_command node.public_hostname, command
+        ridley.node.execute_command find_hostname(node_name, node), command
       else
         node.chef_run
       end
@@ -32,5 +32,12 @@ module SilverSpurs
       node
     end
 
+    # Waterfall through the options, use the node name as a last resort
+    def find_hostname(node_name, node)
+      return node.public_hostname if node.public_hostname
+      return node.public_ipv4 if node.public_ipv4
+      return node_name
+    end
+    
   end
 end

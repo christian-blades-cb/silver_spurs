@@ -37,7 +37,7 @@ describe SilverSpurs::ChefInterface do
       end
 
       it 'should pass in the host name from the node object' do
-        @node_obj.should_receive(:public_hostname).and_return 'hostname'
+        @chef_i.should_receive(:find_hostname).and_return 'hostname'
         @node_resource.should_receive(:execute_command).with('hostname', anything)
       end
 
@@ -130,6 +130,73 @@ describe SilverSpurs::ChefInterface do
       end
     end
         
+  end
+
+  describe :find_hostname do
+    before :each do
+      @chef_i = SilverSpurs::ChefInterface.new({})
+      @node_resource = double('node_resource')
+      @node_name = 'node_name'
+      @hostname = 'hostname.domain.tld'
+      @ipv4 = '1.1.1.1'
+    end
+    
+    def call_find_hostname(node_name, node)
+      @chef_i.send :find_hostname, node_name, node
+    end
+
+    context 'when node knows about public_hostname' do
+      before :each do
+        @node_resource.stub(:public_hostname).and_return @hostname
+      end
+
+      context 'and also public_ipv4' do
+        before :each do
+          @node_resource.stub(:public_ipv4).and_return @ipv4
+        end
+
+        it 'returns the public hostname' do
+          call_find_hostname(@node_name, @node_resource).should eq @hostname
+        end
+      end
+
+      context 'but not public_ipv4' do
+        before :each do
+          @node_resource.stub(:public_ipv4).and_return nil
+        end
+
+        it 'returns the public hostname' do
+          call_find_hostname(@node_name, @node_resource).should eq @hostname
+        end
+      end
+    end
+
+    context 'when node does not know about public_hostname' do
+      before :each do
+        @node_resource.stub(:public_hostname).and_return nil
+      end
+
+      context 'but does know public_ipv4' do
+        before :each do
+          @node_resource.stub(:public_ipv4).and_return @ipv4
+        end
+
+        it 'returns the public_ipv4' do
+          call_find_hostname(@node_name, @node_resource).should eq @ipv4
+        end
+      end
+
+      context 'and is also ignorant of the public_ipv4' do
+        before :each do
+          @node_resource.stub(:public_ipv4).and_return nil
+        end
+
+        it 'returns the node name' do
+          call_find_hostname(@node_name, @node_resource).should eq @node_name
+        end
+      end
+    end
+    
   end
        
 end

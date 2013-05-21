@@ -38,7 +38,12 @@ module SilverSpurs
       return false unless File.exists? pid_file_path(process_name)
       
       pid = File.read(pid_file_path(process_name)).to_i
-      IO.popen("ps -o command -p #{pid}").read.split("\n").count == 2
+      
+      ps_handle = IO.popen("ps -o command -p #{pid}")
+      process_is_running = ps_handle.read.split("\n").count == 2
+      ps_handle.close
+      
+      process_is_running
     end
 
     def success?(process_name)

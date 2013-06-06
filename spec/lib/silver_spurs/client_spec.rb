@@ -118,7 +118,7 @@ describe SilverSpurs::Client do
       @client.stub(:spur_host).and_return @resource
     end
 
-    it 'returns a ChefRun object' do
+    it 'returns a ChefOutput object' do
       response_payload = ["ok", {'stderr' => '', 'stdout' => '', 'exit_code' => 0, 'exit_status' => 0}]
       response = double('response')
       response.stub(:to_str).and_return response_payload.to_json
@@ -126,11 +126,33 @@ describe SilverSpurs::Client do
 
       @resource.stub(:post).and_return response
 
-      SilverSpurs::ChefRun.should_receive(:new).with(response_payload)
+      SilverSpurs::ChefOutput.should_receive(:new).with(response_payload)
 
       @client.start_chef_run('hostname')
     end
     
+  end
+
+  describe :set_node_attributes do
+    before :each do
+      @client = SilverSpurs::Client.new 'http://localhost'
+      @resource = double('rest-resource')
+      @resource.stub(:[]).and_return @resource
+      @client.stub(:spur_host).and_return @resource
+    end
+
+    it 'returns a ChefOutput object' do
+      response_payload = ["ok", {'stderr' => '', 'stdout' => '', 'exit_code' => 0, 'exit_status' => 0}]
+      response = double('response')
+      response.stub(:to_str).and_return response_payload.to_json
+      response.stub(:code).and_return 200
+
+      @resource.stub(:put).and_return response
+
+      SilverSpurs::ChefOutput.should_receive(:new).with(response_payload)
+
+      @client.set_node_attributes 'hostname', { 'this.attribute.right.here' => true }
+    end
   end
   
 end

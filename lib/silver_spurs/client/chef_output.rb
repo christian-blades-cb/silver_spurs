@@ -3,7 +3,7 @@ require 'silver_spurs/client/exceptions'
 require 'erb'
 
 module SilverSpurs
-  class ChefRun
+  class ChefOutput
 
     attr_reader :log, :status
 

@@ -4,7 +4,7 @@ require 'json'
 require 'silver_spurs/knife_interface'
 require 'silver_spurs/client/exceptions'
 require 'silver_spurs/client/bootstrap_run'
-require 'silver_spurs/client/chef_run'
+require 'silver_spurs/client/chef_output'
 
 module SilverSpurs
   class Client
@@ -28,7 +28,14 @@ module SilverSpurs
     def start_chef_run(host_name, runlist = [])
       response = spur_host["kick/#{host_name}"].post :params => { :run => runlist }
       raise ClientException.new("the host name was not found", response) if response.code == 404
-      ChefRun.new JSON.parse(response)
+      ChefOutput.new JSON.parse(response)
+    end
+
+    def set_node_attributes(host_name, attributes = {})
+      headers = { :accept => :json, :content_type => 'application/json' }
+      response = spur_host["attributes/#{host_name}"].put({ :attributes => attributes }.to_json, headers)
+      raise ClientException.new("the host name was not found", response) if response.code == 404
+      ChefOutput.new JSON.parse(response)
     end
 
     private

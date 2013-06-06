@@ -198,5 +198,48 @@ describe SilverSpurs::ChefInterface do
     end
     
   end
-       
+
+  describe :update_node_attributes do
+
+    before :each do
+      @chef_i = SilverSpurs::ChefInterface.new({})
+      @node_obj = double('node_obj')
+    end
+
+    context 'when the target node is found' do
+      it 'finds a node then updates its attributes' do
+        @chef_i.should_receive(:find_node).and_return @node_obj
+        @node_obj.should_receive(:set_chef_attribute).with(kind_of(String), kind_of(String))
+        @node_obj.should_receive(:save)
+
+        @chef_i.update_node_attributes 'node', { 'app.program.config' => 'bananas' }
+      end
+    end
+
+    context 'when the target node is not found' do
+      before :each do
+        @ridley = double('ridley')
+        Ridley.stub(:new).and_return @ridley
+        @node_resource = double('node_res')
+        @ridley.stub(:node).and_return @node_resource
+        @node_resource.stub(:find).and_return nil
+      end
+
+      it 'throws an exception when trying to find the target node' do
+        expect {
+          @chef_i.update_node_attributes('node', { 'app.program.config' => 'bananas' })
+        }.to raise_exception SilverSpurs::NodeNotFoundException
+      end
+
+      it 'does not try to set or save any node attributes' do
+        @node_obj.should_not_receive(:set_chef_attribute).with any_args
+        @node_obj.should_not_receive(:save).with any_args
+
+        expect {
+          @chef_i.update_node_attributes('node', { 'app.program.config' => 'bananas' })
+        }.to raise_exception SilverSpurs::NodeNotFoundException
+      end
+    end
+
+  end
 end

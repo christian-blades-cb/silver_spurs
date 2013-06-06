@@ -127,7 +127,6 @@ module SilverSpurs
       merge_json_body_params
       all_present = required_params.none? { |required_param| params[required_param].nil? }
       unless all_present
-        puts params
         halt 406, {:required_params => required_params}.to_json
       end
     end

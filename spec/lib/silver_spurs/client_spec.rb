@@ -118,7 +118,7 @@ describe SilverSpurs::Client do
       @client.stub(:spur_host).and_return @resource
     end
 
-    it 'returns a ChefRun object' do
+    it 'returns a ChefOutput object' do
       response_payload = ["ok", {'stderr' => '', 'stdout' => '', 'exit_code' => 0, 'exit_status' => 0}]
       response = double('response')
       response.stub(:to_str).and_return response_payload.to_json
@@ -126,11 +126,51 @@ describe SilverSpurs::Client do
 
       @resource.stub(:post).and_return response
 
-      SilverSpurs::ChefRun.should_receive(:new).with(response_payload)
+      SilverSpurs::ChefOutput.should_receive(:new).with(response_payload)
 
       @client.start_chef_run('hostname')
     end
     
   end
-  
+
+  describe :set_node_attributes do
+    before :each do
+      @client = SilverSpurs::Client.new 'http://localhost'
+      @resource = double('rest-resource')
+      @resource.stub(:[]).and_return @resource
+      @client.stub(:spur_host).and_return @resource
+    end
+
+    it 'returns a String indicating success' do
+      response = 'true'
+      response.stub(:to_str).and_return 'true'
+      response.stub(:code).and_return 200
+      @resource.stub(:put).and_return response
+
+      @client.set_node_attributes('hostname', { 'this.attribute.right.here' => true })
+        .should be_a String
+    end
+
+    it 'raises an exception if a 404 is encountered' do
+      response = 'explosions'
+      response.stub(:to_str).and_return 'explosions'
+      response.stub(:code).and_return 404
+      @resource.stub(:put).and_raise RestClient::ResourceNotFound
+
+      expect {
+        @client.set_node_attributes('hostname', { 'this.attribute.right.here' => true })
+      }.to raise_exception SilverSpurs::ClientException
+    end
+
+    it 'raises a rather generic ClientException when any exception is caught' do
+      response = 'explosions'
+      response.stub(:to_str).and_return 'explosions'
+      @resource.stub(:put).and_raise 'uh ohes!'
+
+      expect {
+        @client.set_node_attributes('hostname', { 'this.attribute.right.here' => true })
+      }.to raise_exception SilverSpurs::ClientException
+    end
+  end
+
 end

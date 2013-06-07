@@ -141,17 +141,25 @@ describe SilverSpurs::Client do
       @client.stub(:spur_host).and_return @resource
     end
 
-    it 'returns a ChefOutput object' do
-      response_payload = ["ok", {'stderr' => '', 'stdout' => '', 'exit_code' => 0, 'exit_status' => 0}]
-      response = double('response')
-      response.stub(:to_str).and_return response_payload.to_json
+    it 'returns a String indicating success' do
+      response = 'true'
+      response.stub(:to_str).and_return 'true'
       response.stub(:code).and_return 200
-
       @resource.stub(:put).and_return response
 
-      SilverSpurs::ChefOutput.should_receive(:new).with(response_payload)
+      @client.set_node_attributes('hostname', { 'this.attribute.right.here' => true })
+        .should be_a String
+    end
 
-      @client.set_node_attributes 'hostname', { 'this.attribute.right.here' => true }
+    it 'raises an exception if a 404 is encountered' do
+      response = 'explosions'
+      response.stub(:to_str).and_return 'explosions'
+      response.stub(:code).and_return 404
+      @resource.stub(:put).and_return response
+
+      expect {
+        @client.set_node_attributes('hostname', { 'this.attribute.right.here' => true })
+      }.to raise_exception SilverSpurs::ClientException
     end
   end
   

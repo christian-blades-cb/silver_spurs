@@ -303,10 +303,10 @@ describe SilverSpurs::App do
 
       before :each do
         @attributes = {
-          :attributes => [
-            { :thing => 'sloth' },
-            { :things => 'more_sloths' }
-          ]
+          :attributes => {
+            :thing => 'sloth',
+            :things => 'more_sloths'
+          }
         }.to_json
 
         header 'Content-Type', 'application/json'

@@ -35,7 +35,7 @@ module SilverSpurs
       headers = { :accept => :json, :content_type => 'application/json' }
       response = spur_host["attributes/#{host_name}"].put({ :attributes => attributes }.to_json, headers)
       raise ClientException.new("the host name was not found", response) if response.code == 404
-      ChefOutput.new JSON.parse(response)
+      response
     end
 
     private

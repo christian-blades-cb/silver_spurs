@@ -18,7 +18,9 @@ module SilverSpurs
       payload = parameterize_hash params
       headers = {:accept => :json, :content_type=> 'application/x-www-form-urlencoded'}
 
-      response = spur_host["bootstrap/#{ip}"].put(payload, headers, &method(:dont_redirect_for_303))
+      response = gracefully_handle_rest_call do
+        spur_host["bootstrap/#{ip}"].put(payload, headers, &method(:dont_redirect_for_303))
+      end
       
       throw ClientException.new("unexpected response", response) unless response.code == 303
 
@@ -26,19 +28,32 @@ module SilverSpurs
     end
 
     def start_chef_run(host_name, runlist = [])
-      response = spur_host["kick/#{host_name}"].post :params => { :run => runlist }
-      raise ClientException.new("the host name was not found", response) if response.code == 404
+      response = gracefully_handle_rest_call do
+        spur_host["kick/#{host_name}"].post :params => { :run => runlist }
+      end
       ChefOutput.new JSON.parse(response)
     end
 
     def set_node_attributes(host_name, attributes = {})
       headers = { :accept => :json, :content_type => 'application/json' }
-      response = spur_host["attributes/#{host_name}"].put({ :attributes => attributes }.to_json, headers)
-      raise ClientException.new("the host name was not found", response) if response.code == 404
-      response
+      gracefully_handle_rest_call do
+        spur_host["attributes/#{host_name}"].put({ :attributes => attributes }.to_json, headers)
+      end
     end
 
     private
+
+    def gracefully_handle_rest_call(&rest_call)
+      begin
+        response = rest_call.call
+      rescue RestClient::ResourceNotFound
+        raise ClientException.new("the host name was not found", response)
+      rescue Exception
+        raise ClientException.new("an unanticipated error occured", response)
+      end
+
+      response
+    end
     
     def parameterize_hash(param_hash)
       uri = Addressable::URI.new

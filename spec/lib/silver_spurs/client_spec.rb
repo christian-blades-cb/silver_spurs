@@ -165,7 +165,6 @@ describe SilverSpurs::Client do
     it 'raises a rather generic ClientException when any exception is caught' do
       response = 'explosions'
       response.stub(:to_str).and_return 'explosions'
-      response.stub(:code).and_return 404
       @resource.stub(:put).and_raise 'uh ohes!'
 
       expect {

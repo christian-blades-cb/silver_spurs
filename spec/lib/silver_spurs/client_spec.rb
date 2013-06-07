@@ -161,6 +161,17 @@ describe SilverSpurs::Client do
         @client.set_node_attributes('hostname', { 'this.attribute.right.here' => true })
       }.to raise_exception SilverSpurs::ClientException
     end
+
+    it 'raises a rather generic ClientException when any exception is caught' do
+      response = 'explosions'
+      response.stub(:to_str).and_return 'explosions'
+      response.stub(:code).and_return 404
+      @resource.stub(:put).and_raise 'uh ohes!'
+
+      expect {
+        @client.set_node_attributes('hostname', { 'this.attribute.right.here' => true })
+      }.to raise_exception SilverSpurs::ClientException
+    end
   end
-  
+
 end

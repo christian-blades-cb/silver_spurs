@@ -1,9 +1,9 @@
-require 'silver_spurs/client/chef_run'
+require 'silver_spurs/client/chef_output'
 
-describe SilverSpurs::ChefRun do
+describe SilverSpurs::ChefOutput do
   describe :convert_status do
     before :each do
-      @chef_run = SilverSpurs::ChefRun.new(["ok",{'stdout' => '', 'stderr' => '', 'exit_code' => 0, 'exit_status' => 0}])
+      @chef_run = SilverSpurs::ChefOutput.new(["ok",{'stdout' => '', 'stderr' => '', 'exit_code' => 0, 'exit_status' => 0}])
     end
 
     def call_convert_status(response)
@@ -34,7 +34,7 @@ describe SilverSpurs::ChefRun do
 
   describe :prettify_log do
     before :each do
-      @chef_run = SilverSpurs::ChefRun.new(["ok",{'stdout' => '', 'stderr' => '', 'exit_code' => 0, 'exit_status' => 0}])
+      @chef_run = SilverSpurs::ChefOutput.new(["ok",{'stdout' => '', 'stderr' => '', 'exit_code' => 0, 'exit_status' => 0}])
     end
 
     def call_prettify_log(response)

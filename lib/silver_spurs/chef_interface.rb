@@ -20,6 +20,14 @@ module SilverSpurs
       end
     end
 
+    def update_node_attributes(node_name, attributes)
+      node = find_node node_name
+      attributes.each do |attribute_name, value|
+        node.set_chef_attribute attribute_name, value
+      end
+      node.save
+    end
+
     private
 
     def ridley

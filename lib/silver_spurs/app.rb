@@ -40,10 +40,7 @@ module SilverSpurs
     end
 
     put '/bootstrap/:ip' do
-      required_params = [:node_name]
-      unless required_vars? params, required_params
-        return 406, {:required_params => required_params}.to_json
-      end
+      ensure_required_params :node_name
 
       node_name = params[:node_name].strip
       return 406, {:bad_params => :node_name}.to_json unless node_name =~ settings.node_name_filter
@@ -107,8 +104,38 @@ module SilverSpurs
       end
     end
 
-    def required_vars?(params, requirement_list)
-      requirement_list.none? { |required_param| params[required_param].nil? }
+    # JSON endpoint - set Content-Type request header to 'application/json'
+    # This should be PUT'd to with a JSON payload that looks like:
+    # {
+    #   "attributes": {
+    #     "somenew.node.attribute": "bananas",
+    #     "another.node.attribute": true
+    #   }
+    # }
+    put '/attributes/:ip' do
+      ensure_required_params :attributes
+
+      chef = ChefInterface.new(settings.chef_config)
+      begin
+        chef.update_node_attributes(params[:ip], params[:attributes])
+      rescue SilverSpurs::NodeNotFoundException
+        status 404
+      end
+    end
+
+    def ensure_required_params(*required_params)
+      merge_json_body_params
+      all_present = required_params.none? { |required_param| params[required_param].nil? }
+      unless all_present
+        halt 406, {:required_params => required_params}.to_json
+      end
+    end
+
+    def merge_json_body_params
+      if request.content_type.include?('application/json') and request.content_length.to_i > 0
+        request.body.rewind
+        params.merge! JSON.parse(request.body.read.strip)
+      end
     end
     
   end

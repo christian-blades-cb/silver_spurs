@@ -292,6 +292,61 @@ describe SilverSpurs::App do
     end
 
   end
+
+  describe '/attributes/:ip' do
+    before :each do
+      @chef = double('chef')
+      SilverSpurs::ChefInterface.stub(:new).and_return @chef
+    end
+
+    context 'when attributes are supplied' do
+
+      before :each do
+        @attributes = {
+          :attributes => {
+            :thing => 'sloth',
+            :things => 'more_sloths'
+          }
+        }.to_json
+
+        header 'Content-Type', 'application/json'
+      end
+
+      it 'updates the attributes on the target node' do
+        @chef.should_receive(:update_node_attributes)
+
+        put '/attributes/node', @attributes
+        last_response.status.should eq 200
+      end
+
+      context 'and the node does not exist' do
+        it 'should return a 404' do
+          @chef.stub(:update_node_attributes).and_raise(SilverSpurs::NodeNotFoundException.new)
+
+          put '/attributes/node', @attributes
+          last_response.status.should eq 404
+        end
+      end
+
+    end
+
+    context 'when attributes are not supplied' do
+
+      it 'returns a 406 since attributes (required) were not present' do
+        put '/attributes/node'
+        last_response.status.should eq 406
+      end
+
+      context 'and the node does not exist' do
+        it 'should still return a 406 due to the missing attributes' do
+          put '/attributes/node'
+          last_response.status.should eq 406
+        end
+      end
+
+    end
+
+  end
    
 end
 

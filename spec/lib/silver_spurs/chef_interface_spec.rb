@@ -10,6 +10,7 @@ describe SilverSpurs::ChefInterface do
       @ridley = double('ridley')
       @node_resource = double('node_resource')
       @node_obj = double('node_obj')
+      @node_obj.stub(:public_hostname).and_return 'node_name'
 
       @chef_i.stub(:ridley).and_return @ridley
       @ridley.stub(:node).and_return @node_resource
@@ -17,7 +18,7 @@ describe SilverSpurs::ChefInterface do
     
     it 'finds a node and then launches a chef run' do
       @chef_i.should_receive(:find_node).and_return @node_obj
-      @node_obj.should_receive(:chef_run)
+      @node_obj.should_receive :chef_run
 
       @chef_i.chef_run 'node'
     end
@@ -25,25 +26,22 @@ describe SilverSpurs::ChefInterface do
     context 'with a run list' do
       before :each do
         @chef_i.stub(:find_node).and_return @node_obj
+        @node_obj.stub(:merge_data)
+        @node_resource.stub(:run)
+        @run_list = ['recipe[one]', 'recipe[two]']
       end
       
       after :each do
-        @chef_i.chef_run 'node_name', ['recipe[one]', 'recipe[two]']
+        @chef_i.chef_run 'node_name', @run_list
       end
       
-      it 'should call execute off of the node resource' do
-        @node_obj.stub(:public_hostname).and_return 'hostname'
-        @node_resource.should_receive(:execute_command)
+      it 'should call run off of the node resource' do
+        @node_resource.should_receive(:run)
       end
 
-      it 'should pass in the host name from the node object' do
-        @chef_i.should_receive(:find_hostname).and_return 'hostname'
-        @node_resource.should_receive(:execute_command).with('hostname', anything)
-      end
-
-      it 'should pass in the run list as a comma-seperated string' do
-        @node_obj.stub(:public_hostname).and_return 'hostname'
-        @node_resource.should_receive(:execute_command).with(anything, %r{'recipe\[one\],recipe\[two\]'})
+      it 'should pass in the run list to ridley if provided' do
+        @node_resource.should_receive(:run)
+          .with(kind_of(String), "chef-client -o '#{@run_list.join(',')}'")
       end      
     end
 
@@ -56,7 +54,7 @@ describe SilverSpurs::ChefInterface do
         @chef_i.stub(:find_node).and_return @node_obj
       end
       
-      it 'should call chef_run off of the node object' do
+      it 'should call #run off of the node object' do
         @node_obj.should_receive :chef_run
       end
     end    

@@ -12,9 +12,9 @@ module SilverSpurs
 
     def chef_run(node_name, run_list = [])
       node = find_node node_name
+      hostname = find_hostname(node_name, node)
       if run_list.size > 0
-        command = "sudo chef-client -o '#{run_list.join(',')}'"
-        ridley.node.execute_command find_hostname(node_name, node), command
+        ridley.node.run hostname, "chef-client -o '#{run_list.join(',')}'"
       else
         node.chef_run
       end
@@ -22,9 +22,7 @@ module SilverSpurs
 
     def update_node_attributes(node_name, attributes)
       node = find_node node_name
-      attributes.each do |attribute_name, value|
-        node.set_chef_attribute attribute_name, value
-      end
+      attributes.each { |attr_name, value| node.set_chef_attribute(attr_name, value) }
       node.save
     end
 
@@ -44,7 +42,7 @@ module SilverSpurs
     def find_hostname(node_name, node)
       return node.public_hostname if node.public_hostname
       return node.public_ipv4 if node.public_ipv4
-      return node_name
+      node_name
     end
     
   end

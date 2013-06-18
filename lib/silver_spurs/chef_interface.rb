@@ -1,5 +1,3 @@
-require 'singleton'
-require 'forwardable'
 require 'ridley'
 require 'silver_spurs/chef_exceptions'
 

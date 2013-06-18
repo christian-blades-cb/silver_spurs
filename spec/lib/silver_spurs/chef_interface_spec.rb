@@ -41,7 +41,7 @@ describe SilverSpurs::ChefInterface do
 
       it 'should pass in the run list to ridley if provided' do
         @node_resource.should_receive(:run)
-          .with(kind_of(String), "chef-client -o '#{@run_list.join(',')}'")
+          .with(kind_of(String), /^(.+)'recipe\[one],recipe\[two]'$/)
       end      
     end
 

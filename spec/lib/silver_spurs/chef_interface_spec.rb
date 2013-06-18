@@ -39,6 +39,12 @@ describe SilverSpurs::ChefInterface do
         @node_resource.should_receive(:run)
       end
 
+
+      it 'should pass in the host name from the node object' do
+        @chef_i.should_receive(:find_hostname).and_return 'hostname'
+        @node_resource.should_receive(:run).with('hostname', anything)
+      end
+
       it 'should pass in the run list to ridley if provided' do
         @node_resource.should_receive(:run)
           .with(kind_of(String), /^(.+)'recipe\[one],recipe\[two]'$/)

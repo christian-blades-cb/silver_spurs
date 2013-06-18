@@ -19,7 +19,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'chef', '>= 10.18.2'
   gem.add_dependency 'rest-client', '~> 1.6.7'
   gem.add_dependency 'addressable', '~> 2.3.3'
-  gem.add_dependency "ridley", "~> 0.11.0.rc1"
+  gem.add_dependency 'ridley', '~> 1.1.1'
 
   gem.add_development_dependency 'guard'
   gem.add_development_dependency 'guard-rspec'

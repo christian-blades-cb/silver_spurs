@@ -29,7 +29,7 @@ module SilverSpurs
 
     def start_chef_run(host_name, runlist = [])
       response = gracefully_handle_rest_call do
-        spur_host["kick/#{host_name}"].post :params => { :run => runlist }
+        spur_host["kick/#{host_name}"].post({ :run => runlist })
       end
       ChefOutput.new JSON.parse(response)
     end
@@ -46,10 +46,10 @@ module SilverSpurs
     def gracefully_handle_rest_call(&rest_call)
       begin
         response = rest_call.call
-      rescue RestClient::ResourceNotFound
-        raise ClientException.new("the host name was not found", response)
-      rescue Exception
-        raise ClientException.new("an unanticipated error occured", response)
+      rescue RestClient::ResourceNotFound => ex
+        raise ClientException.new("the host name was not found", ex.response)
+      rescue Exception => ex
+        raise ClientException.new("an unanticipated error occured", ex.message)
       end
 
       response

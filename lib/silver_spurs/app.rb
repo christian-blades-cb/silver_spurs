@@ -11,18 +11,21 @@ module SilverSpurs
     
     set :deployment_key, "/etc/chef/deployment_key.pem"
     set :deployment_user, "silverspurs"
-    set :chef_config, {
+
+    default_chef_config = {
       server_url: 'http://localhost:4000',
       client_name: 'silver_spurs',
       client_key: '/etc/chef/silver_spurs.pem',
       ssh: {
         user: settings.deployment_user,
         keys: [ settings.deployment_key ],
-        paranoid: false
+        paranoid: false,
+        sudo: false
       }
     }
-    # sane setting for AD subdomain
-    set :node_name_filter, /^[-A-Za-z0-9]{3,15}$/
+
+    set :chef_config, default_chef_config
+    set :node_name_filter, /^[-A-Za-z0-9]{3,15}$/ # sane setting for AD subdomain
     
     get '/' do
       %q| Ride 'em, cowboy |
@@ -55,8 +58,7 @@ module SilverSpurs
                                    [arg, params[arg]]
                                  end]
       
-        command = KnifeInterface.bootstrap_command(
-                                                   params[:ip],
+        command = KnifeInterface.bootstrap_command(params[:ip],
                                                    node_name,
                                                    settings.deployment_user,
                                                    settings.deployment_key,
@@ -96,7 +98,7 @@ module SilverSpurs
 
     post '/kick/:ip' do
       run_list = params[:run] || []
-      chef = ChefInterface.new(settings.chef_config)
+      chef     = ChefInterface.new(settings.chef_config)
       begin
         chef.chef_run(params[:ip], run_list).to_json
       rescue SilverSpurs::NodeNotFoundException

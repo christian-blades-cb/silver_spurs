@@ -49,7 +49,7 @@ module SilverSpurs
       rescue RestClient::ResourceNotFound => ex
         raise ClientException.new("the host name was not found", ex.response)
       rescue Exception => ex
-        raise ClientException.new("an unanticipated error occured", ex.message)
+        raise ClientException.new("an unanticipated error occured: #{ex.message}", ex.backtrace)
       end
 
       response

@@ -14,6 +14,7 @@ Gem::Specification.new do |gem|
   gem.name          = "silver_spurs"
   gem.require_paths = ["lib"]
   gem.version       = SilverSpurs::VERSION
+  gem.required_ruby_version = '>= 1.9.3'
 
   gem.add_dependency 'sinatra', '>= 1.3.5'
   gem.add_dependency 'chef', '>= 10.18.2'

@@ -15,20 +15,14 @@ module SilverSpurs
     private
 
     def convert_status(response)
-      code = response[0]
-      case code
-      when 'ok'
-        :success
-      when 'error'
-        :failed
-      end
+      failure = (response['exit_code'] == 1) || (response['exit_status'] == 1)
+      failure ? :failed : :success
     end
 
     def prettify_log(response)
-      run_info = response[1]
-      stdout = run_info['stdout']
-      stderr = run_info['stderr']
-      exit_code = run_info['exit_code'] || run_info['exit_status']
+      stdout = response['stdout']
+      stderr = response['stderr']
+      exit_code = response['exit_code'] || response['exit_status']
 
       template = ERB.new <<-END
 Exit Code: <%= exit_code %>
@@ -36,7 +30,7 @@ Exit Code: <%= exit_code %>
 <%= stdout %>
 --STDERR-----------------
 <%= stderr %>
-END
+      END
       template.result binding
     end
 
